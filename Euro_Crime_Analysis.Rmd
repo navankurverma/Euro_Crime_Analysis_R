@@ -16,7 +16,7 @@ library(gifski)
 library(png)
 ```
 
-## 1. Pull Data
+## 1. Pull Data {#Pull_Data}
 
 Data Sources are:
 [Eurostat](https://ec.europa.eu/eurostat/web/crime/data/database)
@@ -47,7 +47,7 @@ imig[,c(2,3,5,6)] <- lapply(imig[,c(2,3,5,6)],as.numeric)  #Converting required 
 
 ```
 
-## 2. Check Data
+## 2. Check Data {#Check_Data}
 
 ```{r check}
 
@@ -66,7 +66,7 @@ str(crime)
 ```
 
 
-## 3. Manipulate Data
+## 3. Manipulate Data {#Manipulate_Data}
 
 Dataset can be used as it is without manipulations also. But in the pulled data there are large number of rows in crime data, which we can transform. So ICCS column values are put into different columns with their values corresponding to the crime value in Value column.
 
@@ -94,7 +94,7 @@ crime.total[grep("Kosovo",crime.total$GEO),2] <- "Kosovo"
 
 ```
 
-## 4. Analysis on Data
+## 4. Analysis on Data {#Analyze_Data}
 
 Country which had highest number of offences in a year from 2008-2017:
 ```{r Analysis1}
@@ -112,7 +112,7 @@ knitr::kable(yearwisemax[order(yearwisemax$TIME),c(1:3)])
 
 There has been reduction in highest number of total offences over the period of 2008-2017, with Denmark being worst till 2014 and Sweden from 2015.
 
-## 5. Visualizing the data
+## 5. Visualizing the data {#Visualize_Data}
 
 Plotting each offence for each country in each year from 2008-2017:
 ``` {r Visualizing data1, warning=FALSE}
@@ -152,16 +152,16 @@ p2 <- crime.total %>%
   ggplot(aes(-ordering, Totals, fill = GEO)) +
   geom_col(width = 0.8, position = "identity") +
   coord_flip() +
-  geom_text(aes(-ordering,y=0,label = GEO,hjust=0)) +       #country label
-  geom_text(aes(-ordering,y=Totals,label = Totals, hjust=0)) + # value label
+  geom_text(aes(-ordering, y=0, label = GEO, hjust=0)) +       #country label
+  geom_text(aes(-ordering, y=Totals, label = Totals, hjust=0)) + # value label
   theme_minimal() +
   theme(legend.position = "none",axis.text.y=element_blank(), axis.ticks.y = element_blank()) +
   labs(y = "Offences per thousand inhabitants",
        x = "Countries", title = "Crime Data for European Countries {closest_state}") +
-  transition_states(TIME, transition_length = 1, state_length = 10) +
+  transition_states(TIME, transition_length = 10, state_length = 14, wrap = FALSE) +
   ease_aes("sine-in-out")
 
-animate(p2,  width = 600, height = 500, end_pause = 50, renderer = gifski_renderer("gganim2.gif"))
+animate(p2, fps = 20, width = 600, height = 500,nframes = 300, end_pause = 30, start_pause = 30, renderer = gifski_renderer("gganim_top10.gif"))
 ```
 
 
@@ -195,25 +195,26 @@ animate(p3,  width = 756, height = 630, end_pause = 50, renderer = gifski_render
 
 ## 6. Analysis on Ireland Data (work in progress)
 
-```{r Ireland, fig.width=8}
+```{r Ireland, fig.width=8, warning=FALSE}
 crime.ireland <- crime.sub[crime.sub$GEO == "Ireland",]
 crime.ireland
 
 crime.ireland2 <- pivot_longer(crime.ireland, cols = 3:12,names_to = "ICCS", values_to = "Values")
 str(crime.ireland2)
 
-ggplot(crime.ireland2,aes(crime.ireland2$TIME,crime.ireland2$Values)) + 
+ggplot(crime.ireland2,aes(TIME,Values)) + 
   geom_line() + 
   geom_point() + 
-  facet_wrap(~crime.ireland2$ICCS,scales = "free") +
+  facet_wrap(~ICCS,scales = "free") +
   scale_x_continuous(breaks = seq(2006,2018,2)) + 
   labs(x= "Time", y = "Number of Incidents Per Hundred Thousand Inhabitants")
 
 imig10yr <- imig[imig$TIME >= 2008 & imig$TIME <= 2017,]
 
-final <- cbind(imig10yr,crime.ireland)
-final <- final[,c(-2:-6,-8:-11)]
-cor(final[,3:12],final$`Net migration`)
+crime.ireland$Immigrants <- imig10yr$Immigrants
+
+cor(crime.ireland[,c(3:12)], crime.ireland$Immigrants)
+
 #corrplot::corrplot.mixed(cor(final[,3:12]))
 
 #pairs(final[,2:12])
